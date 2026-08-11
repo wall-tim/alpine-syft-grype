@@ -1,6 +1,6 @@
 # alpine-syft-grype
 
-Docker Image based on ``alpine:latest`` including Anchore Syft and Anchore Grype and the latest db (at date of build)
+Docker Image based on ``alpine:latest`` including Anchore Syft and Anchore Grype and the latest db (at date of build) as well as jq.
 
 ## Why
 
