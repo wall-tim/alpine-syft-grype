@@ -26,12 +26,6 @@ jobs:
         run: |
           docker build -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest .
 
-      - name: Scan Image with Grype
-        uses: anchore/scan-action@v6
-        with:
-          image: "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest"
-          fail-build: false
-
       - name: Push Image
         id: push
         run: |
@@ -40,10 +34,3 @@ jobs:
           # Digest für optionale SBOM-Attestations abfangen
           DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest | cut -d'@' -f2)
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
-
-      - name: Generate and Push SBOM Attestation
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}"
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
