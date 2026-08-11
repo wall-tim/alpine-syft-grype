@@ -1,0 +1,51 @@
+name: Build, Scan and Push to GHCR
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest .
+
+      - name: Scan Image with Grype
+        uses: anchore/scan-action@v6
+        env:
+          GRYPE_FAIL_ON: "high"
+          GRYPE_ONLY_FIXED: "true"
+        with:
+          image: "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest"
+
+      - name: Push Image
+        id: push
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+          
+          # Digest für optionale SBOM-Attestations abfangen
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest | cut -d'@' -f2)
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Generate and Push SBOM Attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}"
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
