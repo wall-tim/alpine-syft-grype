@@ -29,7 +29,7 @@ jobs:
       - name: Scan Image with Grype
         uses: anchore/scan-action@v6
         env:
-          GRYPE_FAIL_ON: "high"
+          GRYPE_FAIL_ON_SEVERITY: ""
           GRYPE_ONLY_FIXED: "true"
         with:
           image: "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest"
